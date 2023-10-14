@@ -49,7 +49,7 @@ export async function run(provider: NetworkProvider) {
         return makeSnakeCell(data);
       }
 
-    const link = 'ipfs://bafkreiast4fqlkp4upyu2cvo7fn7aabjusx765yzvqitsr4rpwfvhjguhy'; 
+    const link = 'ipfs://bafybeieb5xhhoi52p6u3fh2lzr5wcugrmtqqx345qyyzn43qe3t2xns5se/metadata.json';
     const content = encodeOffChainContent(link)
 
     const jettonMinter = provider.open(JettonMinter.createFromConfig({

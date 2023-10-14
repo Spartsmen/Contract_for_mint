@@ -1,0 +1,6 @@
+{
+    "name": "Test coin",
+    "description": "Test coin for marking wallets",
+    "symbol": "TC",
+    "decimals": 9
+}
