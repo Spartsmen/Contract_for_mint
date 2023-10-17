@@ -14,7 +14,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
         await jettonWallet.sendTransfer(provider.sender(), {
             value: toNano('0.2'),
             fwdAmount: toNano('0.05'),
-            jettonAmount: toNano('20'),
+            jettonAmount: toNano('60'),
             toAddress: send_to_address,
             queryId: Date.now()
         });

