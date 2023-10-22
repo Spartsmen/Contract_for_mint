@@ -1,6 +1,6 @@
 {
-    "name": "Test coin",
-    "description": "Test coin for marking wallets",
-    "symbol": "TC",
+    "name": "Marker coin",
+    "description": "Coin for marking wallets",
+    "symbol": "MC",
     "decimals": 9
 }
